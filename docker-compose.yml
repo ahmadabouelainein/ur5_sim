@@ -1,7 +1,7 @@
 services:
   ur5_sim:
     build: .
-    container_name: ur5_sim
+    container_name: container
 
     # --- Share the host’s X11 socket so Gazebo/RViz can open windows
     environment:
@@ -17,4 +17,5 @@ services:
     shm_size: "2gb"                             # prevents Gazebo shared‑mem crash :contentReference[oaicite:10]{index=10}
 
     working_dir: /workspace
+    tty: true
     command: bash                               # start interactive shell

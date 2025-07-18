@@ -1,0 +1,10 @@
+<launch>
+  <!-- Spawn robot & controllers -->
+  <include file="$(find ur_gazebo)/launch/ur5_bringup.launch">
+    <arg name="paused" value="false" />
+    <arg name="gui" value="true"/>
+  </include> pkg="controller_manager" type="spawner" name="controller_spawner" args="joint_state_controller pos_joint_traj_controller" /> -->
+
+  <!-- Sine‑wave publisher node -->
+  <node pkg="ur5_ros_gazebo" type="sine_joint_publisher" name="sine_joint_publisher" output="screen" />
+</launch>
