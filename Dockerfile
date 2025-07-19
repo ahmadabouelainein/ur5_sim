@@ -9,15 +9,14 @@ RUN apt-get update && apt-get install -y \
         && rm -rf /var/lib/apt/lists/*                                                    
 RUN apt-get update && apt-get install -y \
         ros-noetic-universal-robots \
-        ros-noetic-ros-control \
-        ros-noetic-ros-controllers \
-        ros-noetic-gazebo-ros-control \
+        ros-noetic-moveit \
+        libeigen3-dev \ 
+        libcppunit-dev \
         && rm -rf /var/lib/apt/lists/*                                                    
 
 WORKDIR /workspace
-RUN mkdir -p /workspace/src
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["bash"]   # default when you `docker compose run`
+CMD ["bash"]
