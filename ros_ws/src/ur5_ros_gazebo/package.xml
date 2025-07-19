@@ -33,7 +33,10 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>actionlib</exec_depend>
   <depend>control_msgs</depend>
-
+  <depend>ur_kinematics</depend>
+  <!-- <depend>orocos_kdl</depend> -->
+  <depend>kdl_parser</depend>     
+  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
