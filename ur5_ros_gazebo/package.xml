@@ -34,8 +34,9 @@
   <exec_depend>actionlib</exec_depend>
   <depend>control_msgs</depend>
   <depend>ur_kinematics</depend>
-  <!-- <depend>orocos_kdl</depend> -->
+  <depend>actionlib_msgs</depend>
   <depend>kdl_parser</depend>     
+  <depend>message_runtime</depend>     
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>

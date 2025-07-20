@@ -63,34 +63,67 @@ MotionLibrary::MotionLibrary(const KDL::Chain&               chain,
 
 /* ───────────────────────── joint‑space move ───────────────────────────── */
 trajectory_msgs::JointTrajectory
-MotionLibrary::generateJointMove(const std::vector<double>& q0,
-                                 const std::vector<double>& q1,
-                                 double v_max, double a_max) const
+MotionLibrary::generateJointMove(const std::vector<double>& q_curr,
+                                 const std::vector<double>& q_start,
+                                 const std::vector<double>& q_target,
+                                 double v_max, double a_max,
+                                 double tolerance_rad /* = 1e-3 */) const
 {
-  const size_t dof = q0.size();
-  std::vector<double> durations(dof);
-  for (size_t i = 0; i < dof; ++i)
-    durations[i] = profileTime(q1[i] - q0[i], v_max, a_max);
+  const size_t dof = q_curr.size();
+  auto build_segment = [&](const std::vector<double>& qa,
+                           const std::vector<double>& qb)
+  {
+    std::vector<double> durations(dof);
+    for (size_t i = 0; i < dof; ++i)
+      durations[i] = profileTime(qb[i] - qa[i], v_max, a_max);
 
-  const double T = *std::max_element(durations.begin(), durations.end());
+    double T = *std::max_element(durations.begin(), durations.end());
 
+    trajectory_msgs::JointTrajectory seg;
+    seg.joint_names = joint_names_;
+
+    for (double t = 0.0; t <= T + 1e-9; t += dt_) {
+      double s = std::clamp(t / T, 0.0, 1.0);
+      trajectory_msgs::JointTrajectoryPoint pt;
+      pt.positions.resize(dof);
+      for (size_t i = 0; i < dof; ++i)
+        pt.positions[i] = qa[i] + s * (qb[i] - qa[i]);
+      pt.time_from_start = ros::Duration(t);
+      seg.points.push_back(pt);
+    }
+    return seg;
+  };
+
+  /* ── 1) optional pre‑segment ───────────────────────────────────────── */
   trajectory_msgs::JointTrajectory traj;
   traj.joint_names = joint_names_;
-
-  for (double t = 0.0; t <= T + 1e-9; t += dt_) {
-    double s = std::clamp(t / T, 0.0, 1.0);
-    trajectory_msgs::JointTrajectoryPoint pt;
-    pt.positions.resize(dof);
-    pt.velocities.resize(dof);
-    for (size_t i = 0; i < dof; ++i) {
-      pt.positions[i]  = q0[i] + s * (q1[i] - q0[i]);
-      pt.velocities[i] = (q1[i] - q0[i]) / T;
-    }
-    pt.time_from_start = ros::Duration(t);
-    traj.points.push_back(pt);
+  bool withinTolerance = true;
+  {
+  for (size_t i = 0; i < q_curr.size(); ++i)
+    if (std::fabs(q_curr[i] - q_start[i]) > tolerance_rad) withinTolerance=false;
   }
+  if (!withinTolerance) {
+    auto seg0 = build_segment(q_curr, q_start);
+    traj.points.insert(traj.points.end(),
+                       seg0.points.begin(), seg0.points.end());
+  }
+
+  /* ── 2) main segment (q_start → q_target) ──────────────────────────── */
+  auto seg1 = build_segment(q_start, q_target);
+
+  /* adjust time‑from‑start of seg1 if we already added seg0 */
+  ros::Duration offset = traj.points.empty() ?
+                         ros::Duration(0) :
+                         traj.points.back().time_from_start;
+  for (auto& pt : seg1.points)
+    pt.time_from_start += offset;
+
+  traj.points.insert(traj.points.end(),
+                     seg1.points.begin(), seg1.points.end());
+
   return traj;
 }
+
 
 /* ───────────────────────── Cartesian line move ────────────────────────── */
 trajectory_msgs::JointTrajectory

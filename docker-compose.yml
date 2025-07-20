@@ -9,13 +9,13 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix          # X‑socket mount :contentReference[oaicite:7]{index=7}
-      - ./:/workspace:rw                        # bind‑mount project sources
+      - ./ros_ws/src:/ws/src:rw                        # bind‑mount project sources
 
     # --- ROS connectivity convenience
     network_mode: host                          # avoids ROS_IP gymnastics :contentReference[oaicite:8]{index=8}
     privileged: true                            # USB, GPU, etc. if needed :contentReference[oaicite:9]{index=9}
     shm_size: "2gb"                             # prevents Gazebo shared‑mem crash :contentReference[oaicite:10]{index=10}
 
-    working_dir: /workspace
+    working_dir: /ws/src
     tty: true
     command: bash                               # start interactive shell

@@ -25,9 +25,12 @@ public:
                 double                          dt = 0.01);
 
   trajectory_msgs::JointTrajectory
-  generateJointMove(const std::vector<double>& q_start,
-                    const std::vector<double>& q_goal,
-                    double v_max, double a_max) const;
+  generateJointMove(const std::vector<double>& q_curr,
+                  const std::vector<double>& q_start,
+                  const std::vector<double>& q_target,
+                  double v_max, double a_max,
+                  double tolerance_rad = 1e-3) const;
+
 
   trajectory_msgs::JointTrajectory
   generateLinearMove(const geometry_msgs::Pose& pose_start,
