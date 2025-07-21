@@ -1,21 +1,126 @@
-services:
-  ur5_sim:
-    build: .
-    container_name: motion_lib_api
+x-gui-vol: &gui-vol
+  - /tmp/.X11-unix:/tmp/.X11-unix:rw
 
-    # --- Share the host’s X11 socket so Gazebo/RViz can open windows
+services:
+###############################################################################
+# interactive dev container
+###############################################################################
+  ur5_dev:
+    build: .
+    image: ur5_gazebo_motion_lib_api
+    container_name: ur5_dev
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix          # X‑socket mount :contentReference[oaicite:7]{index=7}
-      - ./:/ws/src:rw                        # bind‑mount project sources
-
-    # --- ROS connectivity convenience
-    network_mode: host                          # avoids ROS_IP gymnastics :contentReference[oaicite:8]{index=8}
-    privileged: true                            # USB, GPU, etc. if needed :contentReference[oaicite:9]{index=9}
-    shm_size: "2gb"                             # prevents Gazebo shared‑mem crash :contentReference[oaicite:10]{index=10}
-
-    working_dir: /ws/src
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./:/ws/src/:rw
+    network_mode: host
+    privileged: true
+    shm_size: "2gb"
+    working_dir: /ws/
     tty: true
-    command: bash                               # start interactive shell
+    entrypoint: ["/entrypoint.sh"]
+    command: bash        # override with `docker compose run ur5_dev <cmd>`
+
+###############################################################################
+# Task 1 – sine‑wave demo
+###############################################################################
+  ur5_sine_demo:
+    image: ur5_gazebo_motion_lib_api
+    build: .
+    container_name: ur5_sine_demo
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
+      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+    network_mode: host
+    privileged: true
+    shm_size: "2gb"
+    working_dir: /ws
+    tty: true
+    entrypoint: ["/sine_demo_entrypoint.sh"]
+
+###############################################################################
+# Task 2 – motion server
+###############################################################################
+  ur5_motion_server:
+    image: ur5_gazebo_motion_lib_api
+    build: .
+    container_name: ur5_motion_server
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
+      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+    network_mode: host
+    privileged: true
+    shm_size: "2gb"
+    working_dir: /ws
+    tty: true
+    entrypoint: ["/motion_server_entrypoint.sh"]
+
+###############################################################################
+# Task 3 demo client
+###############################################################################
+  ur5_motion_demo:
+    image: ur5_gazebo_motion_lib_api
+    build: .
+    container_name: ur5_motion_demo
+    depends_on: [ur5_motion_server]
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
+      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+    network_mode: host
+    privileged: true
+    shm_size: "2gb"
+    working_dir: /ws
+    tty: true
+    entrypoint: ["/motion_demo_entrypoint.sh"]
+
+###############################################################################
+# Task 4 – LLM Copilot
+###############################################################################
+  ur5_llm_copilot:
+    image: ur5_gazebo_motion_lib_api
+    build: .
+    container_name: ur5_llm_copilot
+    depends_on: [ollama]
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
+      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+    network_mode: host
+    working_dir: /ws
+    tty: true
+    entrypoint: ["/copilot_entrypoint.sh"]
+
+###############################################################################
+# Side‑car LLM server
+###############################################################################
+  ollama:
+    image: ollama/ollama:latest          # official CPU image
+    container_name: ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    tty: true
+    restart: unless-stopped
+    command: ["ollama", "serve"]
+
+volumes:
+  ollama-data:

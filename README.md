@@ -16,7 +16,7 @@ A reproducible, Docker‑first workspace for simulating, commanding and scriptin
 ```bash
 # 1. clone + build image
 $ git clone https://github.com/ahmadabouelainein/ur5_sim.git
-$ cd ur5_sim && docker compose up --build
+$ cd ur5_sim && docker compose build
 
 # 2. open a new terminal in the running container
 $ docker exec -it ur5_sim-dev bash
