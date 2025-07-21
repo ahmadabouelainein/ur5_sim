@@ -1,4 +1,3 @@
-# ros_ws/devel
-# ros_ws/build
+universal_robot/
 # .catkin_workspace
 ur_kinematics/
