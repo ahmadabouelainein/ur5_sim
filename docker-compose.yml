@@ -14,7 +14,13 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./:/ws/src/:rw
+      - ./:/ws/src:rw
+      # - ../ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:rw
+      # - ../ur_motion_api:/ws/src/ur_motion_api:rw
+      # - ../universal_robot/ur_kinematics:/ws/src/ur_kinematics:rw
+      # - ../.git:/ws/src/.git:rw
+      # - ../.gitignore:/ws/src/.gitignore:rw
+      # - ../docker:/ws/src/docker:rw
     network_mode: host
     privileged: true
     shm_size: "2gb"
