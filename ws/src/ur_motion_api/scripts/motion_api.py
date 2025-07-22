@@ -8,7 +8,7 @@ Features
 • Send joint‑space or Cartesian (linear) motion requests via actionlib.
 • Optional feedback callback prints % complete.
 """
-
+from tf.transformations import quaternion_from_euler
 import rospy
 import actionlib
 from sensor_msgs.msg import JointState
@@ -17,6 +17,10 @@ from ur5_ros_gazebo.msg import (
     MoveJointAction,  MoveJointGoal,
     MoveLinearAction, MoveLinearGoal
 )
+CONTROLLER_ORDER = ['shoulder_pan_joint', 'shoulder_lift_joint',
+                    'elbow_joint', 'wrist_1_joint',
+                    'wrist_2_joint', 'wrist_3_joint']
+
 
 class MotionAPI:
     def __init__(self, joint_action_ns='move_joint',
@@ -43,6 +47,9 @@ class MotionAPI:
         """Return the last JointState message received (or None)."""
         return self._state
 
+    def _reorder_to_controller(self, joint_state):
+        name_to_idx = {n: i for i, n in enumerate(joint_state.name)}
+        return [joint_state.position[name_to_idx[n]] for n in CONTROLLER_ORDER]
     # ---------------------------------------------------------------------
     # Joint‑space primitive
     # ---------------------------------------------------------------------
@@ -98,9 +105,9 @@ class MotionAPI:
         self._ac_linear.send_goal(goal, feedback_cb=feedback_cb)
         if wait:
             if timeout is None:
-                finished = self._ac_joint.wait_for_result()
+                finished = self._ac_linear.wait_for_result()
             else:
-                finished = self._ac_joint.wait_for_result(timeout)
+                finished = self._ac_linear.wait_for_result(timeout)
             return finished and self._ac_linear.get_result().success
         return True
 
@@ -123,7 +130,7 @@ class MotionAPI:
         while self.get_state() is None and not rospy.is_shutdown():
             rospy.sleep(0.05)                       # wait for first message
 
-        q_seed = list(self.get_state().position)     # convert tuple→list (6 elems)
+        q_seed = self._reorder_to_controller(self.get_state())
 
         # 2) call the original primitive with the seed
         return self.move_linear(pose_start, pose_goal,
@@ -148,8 +155,10 @@ if __name__ == '__main__':
     # 2) Simple Cartesian line demo
     p0 = Pose()
     p1 = Pose()
-    p1.position.x = 0.45
-    p1.position.z = 0.45
-    # success = move_linear_using_current_state(api, p0, p1,
-    #                                       v_lin=0.1, a_lin=0.25)
-    # rospy.loginfo(f'Linear motion success: {success}')
+    qx, qy, qz, qw = quaternion_from_euler(0, -1.57, 0)  # pitch‑down 90°
+    p0.orientation.x, p0.orientation.y, p0.orientation.z, p0.orientation.w = qx, qy, qz, qw
+    p1.orientation = p0.orientation
+    p1.position.x = 0.75
+    p1.position.z = 0.75
+    success = api.move_linear_using_current_state(p0, p1)
+    rospy.loginfo(f'Linear motion success: {success}')

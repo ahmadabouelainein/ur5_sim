@@ -4,36 +4,25 @@
 
 #include <ur5_ros_gazebo/motion_library.hpp>
 
-int main(int argc,char** argv)
+int main(int argc, char** argv)
 {
-  ros::init(argc,argv,"motion_demo_node");
+  ros::init(argc, argv, "motion_demo_node");
   ros::NodeHandle nh;
 
-  /* --- build KDL chain from URDF ----------------------------------------- */
+  /* --- build KDL chain from URDF --------------------------------------- */
   urdf::Model urdf;  urdf.initParam("robot_description");
-  KDL::Tree tree;    kdl_parser::treeFromUrdfModel(urdf,tree);
-  KDL::Chain chain;  tree.getChain("base_link","tool0",chain);
+  KDL::Tree tree;    kdl_parser::treeFromUrdfModel(urdf, tree);
+  KDL::Chain chain;  tree.getChain("base_link", "tool0", chain);
 
-  /* --- extract joint limits & names -------------------------------------- */
-  unsigned dof = chain.getNrOfJoints();
-  KDL::JntArray qmin(dof), qmax(dof);
-  std::vector<std::string> names; names.reserve(dof);
+  /* --- joint names in controller order --------------------------------- */
+  std::vector<std::string> names = {
+      "shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
+      "wrist_1_joint", "wrist_2_joint", "wrist_3_joint" };
 
-  unsigned idx=0;
-  for(const auto& seg: chain.segments){
-    const auto& j = seg.getJoint();
-    if(j.getType()==KDL::Joint::None) continue;
-    auto uj = urdf.getJoint(j.getName());
-    qmin(idx) = uj->limits->lower;
-    qmax(idx) = uj->limits->upper;
-    names.push_back(j.getName());
-    ++idx;
-  }
+  /* --- create MotionLibrary (analytic IK) ------------------------------ */
+  MotionLibrary lib(chain, names, 0.02);
+  ROS_INFO_STREAM("MotionLibrary ready with DOF = " << names.size());
 
-  /* --- create planner ---------------------------------------------------- */
-  MotionLibrary lib(chain, qmin, qmax, names, 0.01);
-
-  ROS_INFO("MotionLibrary ready with %u DOF.", dof);
   ros::spin();
   return 0;
 }
