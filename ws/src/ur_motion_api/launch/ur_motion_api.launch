@@ -1,6 +1,6 @@
 <launch>
   <!-- Spawn robot & controllers -->
-  <include file="$(find ur5_ros_gazebo)/launch/ur5_bringup.launch"/>
+  <include file="$(find ur5_ros_gazebo)/launch/ur5_motion_demo.launch"/>
   <!-- Sine‑wave publisher node -->
-  <node pkg="ur_motion_api" type="motion_api" name="motion_api" output="screen" />
+  <node pkg="ur_motion_api" type="motion_api.py" name="motion_api" output="screen" />
 </launch>

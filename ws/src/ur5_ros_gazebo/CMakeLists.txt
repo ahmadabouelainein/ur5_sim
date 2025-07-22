@@ -45,7 +45,6 @@ include_directories(
 
 add_library(motion_lib
   src/kdl_ik.cpp
-  # src/traj_utils.cpp
   src/motion_library.cpp
 )
 target_link_libraries(motion_lib
