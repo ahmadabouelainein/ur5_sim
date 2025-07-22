@@ -46,7 +46,7 @@ In [2]: api = MotionAPI(); api.move_joint([], [0, -1.57, 1.57, 0, 0, 0])
 ur5_sim/
 ├─ docker/ …                    # tooling
 ├─ Dockerfile  +  docker‑compose.yml
-├─ ros_ws/                       # <‑‑ Catkin workspace root
+├─ ws/                       # <‑‑ Catkin workspace root
 │   └─ src/
 │       ├─ universal_robot/ur_kinematics  # sparse‑cloned IK pkg
 │       ├─ ur5_ros_gazebo/                # C++ sim + motion lib
