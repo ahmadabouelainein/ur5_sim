@@ -53,7 +53,7 @@ class MotionAPI:
     # ---------------------------------------------------------------------
     # Joint‑space primitive
     # ---------------------------------------------------------------------
-    def move_joint(self, q_start, q_target, v_max=1.0, a_max=2.0,
+    def move_joint(self, q_start, q_target, v_max=0.10, a_max=0.20,
                    wait=True, feedback_cb=None, timeout=None):
         """
         Send a joint‑space motion request.
@@ -88,7 +88,7 @@ class MotionAPI:
     # Cartesian linear primitive
     # ---------------------------------------------------------------------
     def move_linear(self, pose_start: Pose, pose_goal: Pose,
-                    v_lin=0.10, a_lin=0.25,
+                    v_lin=0.01, a_lin=0.05,
                     q_seed=None,
                     wait=True, feedback_cb=None, timeout=None):
         """
@@ -117,8 +117,8 @@ class MotionAPI:
     def move_linear_using_current_state(self,
                                         pose_start,
                                         pose_goal,
-                                        v_lin=0.10,
-                                        a_lin=0.25,
+                                        v_lin=0.0005,
+                                        a_lin=0.001,
                                         wait=True,
                                         timeout=None):
         """
@@ -148,9 +148,8 @@ if __name__ == '__main__':
     # 1) Simple joint move demo
     q0 = [0, -1.57, 1.57, 0, 0, 0]
     q1 = [1.57, 1.57, 1.57, 0, 1.57, 1.57]  
-    success = api.move_joint(api.get_state().position, q1, feedback_cb=
-                             lambda fb: rospy.loginfo(f'Joint motion {fb.percent_complete:.0f}%'))
-    rospy.loginfo(f'Joint motion success: {success}')
+    # success = api.move_joint(api.get_state().position, q1, feedback_cb=lambda fb: rospy.loginfo(f'Joint motion {fb.percent_complete:.0f}%'))
+    # rospy.loginfo(f'Joint motion success: {success}')
 
     # 2) Simple Cartesian line demo
     p0 = Pose()
@@ -158,7 +157,7 @@ if __name__ == '__main__':
     qx, qy, qz, qw = quaternion_from_euler(0, -1.57, 0)  # pitch‑down 90°
     p0.orientation.x, p0.orientation.y, p0.orientation.z, p0.orientation.w = qx, qy, qz, qw
     p1.orientation = p0.orientation
-    p1.position.x = 0.75
-    p1.position.z = 0.75
+    p1.position.x = 0.015
+    p1.position.z = 0.015
     success = api.move_linear_using_current_state(p0, p1)
     rospy.loginfo(f'Linear motion success: {success}')
