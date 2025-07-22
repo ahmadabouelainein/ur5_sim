@@ -43,17 +43,16 @@ In [2]: api = MotionAPI(); api.move_joint([], [0, -1.57, 1.57, 0, 0, 0])
 ## 1 · Repository layout
 
 ```
-ws/src/
-├── ur5_ros_gazebo/        # core C++ package (sim bring‑up, motion library)
-│   ├── launch/            # *.launch.xml files
-│   ├── src/               # *.cpp, *.action implementation
-│   ├── include/ur5_ros_gazebo/
-│   ├── action/            # MoveJoint.action, MoveLinear.action
-│   └── CMakeLists.txt
-├── ur_motion_api/         # pure‑Python wrapper (Task 3)
-│   ├── scripts/motion_api.py
-│   └── CMakeLists.txt
-└── universal_robot/       # vendored upstream meta‑package (URDF, Gazebo)
+ur5_sim/
+├─ docker/ …                    # tooling
+├─ Dockerfile  +  docker‑compose.yml
+├─ ros_ws/                       # <‑‑ Catkin workspace root
+│   └─ src/
+│       ├─ universal_robot/ur_kinematics  # sparse‑cloned IK pkg
+│       ├─ ur5_ros_gazebo/                # C++ sim + motion lib
+│       └─ ur_motion_api/                 # Python API + LLM stub
+└─ miscellaneous (README, LICENSE, bob.txt, scripts)
+
 ```
 
 
