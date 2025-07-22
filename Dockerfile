@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
       ros-noetic-rosbash \
       && rm -rf /var/lib/apt/lists/*
 
-ENV WS=/ws
+ENV WS=/ur5_sim/ws
 WORKDIR ${WS}
 
 RUN pip3 install --no-cache-dir ollama llama-cpp-python termcolor

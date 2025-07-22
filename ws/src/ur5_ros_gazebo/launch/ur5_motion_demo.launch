@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find ur_gazebo)/launch/ur5_bringup.launch">
+    <arg name="gui" value="true"/>
+  </include>
+
+  <node pkg="ur5_ros_gazebo" type="motion_action_server" name="motion_action_server" output="screen"/>
+</launch>

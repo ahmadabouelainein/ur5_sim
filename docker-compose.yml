@@ -14,20 +14,14 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./:/ws/src:rw
-      # - ../ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:rw
-      # - ../ur_motion_api:/ws/src/ur_motion_api:rw
-      # - ../universal_robot/ur_kinematics:/ws/src/ur_kinematics:rw
-      # - ../.git:/ws/src/.git:rw
-      # - ../.gitignore:/ws/src/.gitignore:rw
-      # - ../docker:/ws/src/docker:rw
+      - ./:/ur5_sim:rw
     network_mode: host
     privileged: true
     shm_size: "2gb"
-    working_dir: /ws/
+    working_dir: /ur5_sim/ws/
     tty: true
     entrypoint: ["/entrypoint.sh"]
-    command: bash        # override with `docker compose run ur5_dev <cmd>`
+    command: bash
 
 ###############################################################################
 # Task 1 – sine‑wave demo
@@ -41,8 +35,7 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
-      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+      - ./:/ur5_sim:rw
     network_mode: host
     privileged: true
     shm_size: "2gb"
@@ -62,8 +55,7 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
-      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+      - ./:/ur5_sim:rw
     network_mode: host
     privileged: true
     shm_size: "2gb"
@@ -84,8 +76,7 @@ services:
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
-      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+      - ./:/ur5_sim:rw
     network_mode: host
     privileged: true
     shm_size: "2gb"
@@ -107,8 +98,7 @@ services:
       - OLLAMA_HOST=http://ollama:11434
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./ur5_ros_gazebo:/ws/src/ur5_ros_gazebo:ro
-      - ./ur_motion_api:/ws/src/ur_motion_api:ro
+      - ./:/ur5_sim:rw
     network_mode: host
     working_dir: /ws
     tty: true

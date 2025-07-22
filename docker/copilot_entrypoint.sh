@@ -50,5 +50,5 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # ------------------ run REPL ----------------------------------------------
-exec python3 /ws/src/ur5_ros_gazebo/scripts/llm_copilot.py \
+exec python3 /ur5_sim/ws/src/ur5_ros_gazebo/scripts/llm_copilot.py \
      --backend "$LLM_BACKEND" --model "$LLM_MODEL"

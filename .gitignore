@@ -1,3 +1,4 @@
-universal_robot/
-# .catkin_workspace
+ws/src/universal_robot/
+ws/build
+ws/devel
 ur_kinematics/
