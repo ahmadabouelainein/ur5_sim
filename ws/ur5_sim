@@ -1,0 +1,9 @@
+FROM ollama/ollama:latest
+
+# Start the daemon in the background, pull, then stop it
+RUN (ollama serve & ) \
+    && sleep 6 \
+    && ollama pull phi4-reasoning \
+    && pkill -SIGINT ollama
+
+ENTRYPOINT ["ollama", "serve"]

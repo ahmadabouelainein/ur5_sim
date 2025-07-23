@@ -111,16 +111,13 @@ services:
 # Side‑car LLM server
 ###############################################################################
   ollama:
-    image: ollama/ollama:latest          # official CPU image
-    container_name: ollama
-    # network_mode: host
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama-phi4   # ← new
+    image: ollama-with-phi4
+    ports: ["11434:11434"]
     volumes:
       - ollama-data:/root/.ollama
-    ports:
-      - "11434:11434"
-    tty: true
-    restart: unless-stopped
-    command: ["serve"]
-
+  
 volumes:
   ollama-data:

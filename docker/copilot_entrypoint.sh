@@ -4,7 +4,7 @@ set -euo pipefail
 # ───────────────────── env ------------------------------------------------
 ROS_DISTRO=${ROS_DISTRO:-noetic}
 LLM_BACKEND=${LLM_BACKEND:-ollama}
-LLM_MODEL=${LLM_MODEL:-mistral:instruct}
+LLM_MODEL=${LLM_MODEL:-phi4-reasoning}
 START_SIM=${START_SIM:-0}
 GUI=${GUI:-true}
 OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
