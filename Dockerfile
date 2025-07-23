@@ -9,12 +9,13 @@ RUN apt-get update && apt-get install -y \
       ros-noetic-moveit \
       ros-noetic-universal-robots \
       ros-noetic-rosbash \
+      python3-requests \
       && rm -rf /var/lib/apt/lists/*
 
 ENV WS=/ur5_sim/ws
 WORKDIR ${WS}
 
-RUN pip3 install --no-cache-dir ollama llama-cpp-python termcolor
+RUN pip3 install --no-cache-dir ollama llama-cpp-python termcolor regex
 
 RUN mkdir -p ${WS}/src && \
     cd ${WS}/src && \

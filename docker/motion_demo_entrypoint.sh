@@ -7,7 +7,7 @@ set -euo pipefail
 ROS_DISTRO=${ROS_DISTRO:-noetic}
 
 source "/opt/ros/${ROS_DISTRO}/setup.bash"
-[ -f /ws/devel/setup.bash ] && source /ws/devel/setup.bash
+[ -f /ur5_sim/ws/devel/setup.bash ] && source /ur5_sim/ws/devel/setup.bash
 
 echo "[motion_demo] Waiting for /move_joint action server…"
 until rosnode list 2>/dev/null | grep -q motion_action_server; do

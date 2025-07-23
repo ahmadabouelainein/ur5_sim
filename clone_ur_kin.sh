@@ -1,3 +1,4 @@
+cd ws/src
 git clone --depth 1 --filter=blob:none --sparse \
           --branch noetic-devel \
           https://github.com/ros-industrial/universal_robot.git

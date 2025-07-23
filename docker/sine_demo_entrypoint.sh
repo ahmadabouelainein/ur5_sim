@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 source /opt/ros/noetic/setup.bash
-WS=/ws
+WS=/ur5_sim/ws
 echo "[entrypoint] catkin_make incremental build…"
 cd $WS && catkin_make
 echo "sourcing workspace ..."
