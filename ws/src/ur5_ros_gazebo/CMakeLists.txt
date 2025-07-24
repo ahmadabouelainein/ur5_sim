@@ -73,6 +73,36 @@ add_executable(sine_joint_action_client src/sine_joint_action_client.cpp)
 target_link_libraries(sine_joint_action_client ${catkin_LIBRARIES})
 add_dependencies(sine_joint_action_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+# ─── after all existing add_executable lines ─────────────────────────────
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+
+  ## ─────────── C++ gtest for motion_library ───────────
+  catkin_add_gtest(
+    test_motion_library
+    tests/test_motion_library.cpp
+  )
+  target_link_libraries(
+    test_motion_library
+    motion_lib
+    ${catkin_LIBRARIES}
+  )
+
+  ## ──── C++ rostest + gtest for motion_action_server ────
+  # This will launch the .test file and then run the GTest binary
+  add_rostest_gtest(
+    test_motion_action_server
+    tests/motion_action_server.test      # your launch wrapper
+    tests/test_motion_action_server.cpp # the test implementation
+  )
+  target_link_libraries(
+    test_motion_action_server
+    motion_lib
+    ${catkin_LIBRARIES}
+  )
+
+endif()
+
 # ───────────────────────────── install rules ──────────────────────────────
 install(TARGETS
         motion_lib

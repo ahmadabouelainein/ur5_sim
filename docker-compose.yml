@@ -98,7 +98,7 @@ services:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
       - OLLAMA_HOST=http://localhost:11434
-      - LLM_MODEL=mistral:instruct 
+      - LLM_MODEL=phi4-reasoning 
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ./:/ur5_sim:rw
@@ -116,8 +116,8 @@ services:
       dockerfile: Dockerfile.ollama-phi4   # ← new
     image: ollama-with-phi4
     ports: ["11434:11434"]
-    volumes:
-      - ollama-data:/root/.ollama
+    # volumes:
+    #   - ollama-data:/root/.ollama
   
 volumes:
   ollama-data:

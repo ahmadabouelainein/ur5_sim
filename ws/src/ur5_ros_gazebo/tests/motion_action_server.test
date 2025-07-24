@@ -1,0 +1,22 @@
+<launch>
+  <!-- 1) load a minimal URDF so robot_description is set -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro '$(find ur_description)/urdf/ur5.xacro'" />
+
+  <!-- 2) bring up the fake trajectory‐controller server -->
+  <node pkg="actionlib" type="simple_action_server" name="fake_fjt_server"
+        args="/eff_joint_traj_controller/follow_joint_trajectory control_msgs/FollowJointTrajectoryAction" />
+
+  <!-- 3) now start the node under test -->
+  <node pkg="ur5_ros_gazebo"
+        type="motion_action_server"
+        name="motion_action_server"
+        output="screen" />
+
+  <!-- 4) run the GTest binary that sends MoveJointAction goals -->
+  <test test-name="MotionActionServerTest"
+        pkg="ur5_ros_gazebo"
+        type="test_motion_action_server"
+        name="test_motion_action_server"
+        time-limit="30.0" />
+</launch>

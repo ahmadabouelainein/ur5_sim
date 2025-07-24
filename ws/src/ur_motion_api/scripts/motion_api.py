@@ -8,6 +8,7 @@ Features
 • Send joint‑space or Cartesian (linear) motion requests via actionlib.
 • Optional feedback callback prints % complete.
 """
+import tf2_ros
 from tf.transformations import quaternion_from_euler
 import rospy
 import actionlib
@@ -17,6 +18,7 @@ from ur5_ros_gazebo.msg import (
     MoveJointAction,  MoveJointGoal,
     MoveLinearAction, MoveLinearGoal
 )
+import time
 CONTROLLER_ORDER = ['shoulder_pan_joint', 'shoulder_lift_joint',
                     'elbow_joint', 'wrist_1_joint',
                     'wrist_2_joint', 'wrist_3_joint']
@@ -34,6 +36,8 @@ class MotionAPI:
                                                        MoveJointAction)
         self._ac_linear = actionlib.SimpleActionClient(linear_action_ns,
                                                        MoveLinearAction)
+        self.buf  = tf2_ros.Buffer()
+        self.lis  = tf2_ros.TransformListener(self.buf)
 
         rospy.loginfo("Waiting for motion action servers...")
         self._ac_joint.wait_for_server()
@@ -53,7 +57,7 @@ class MotionAPI:
     # ---------------------------------------------------------------------
     # Joint‑space primitive
     # ---------------------------------------------------------------------
-    def move_joint(self, q_start, q_target, v_max=0.10, a_max=0.20,
+    def move_joint(self, q_start, q_target, v_max=0.20, a_max=0.20,
                    wait=True, feedback_cb=None, timeout=None):
         """
         Send a joint‑space motion request.
@@ -117,8 +121,8 @@ class MotionAPI:
     def move_linear_using_current_state(self,
                                         pose_start,
                                         pose_goal,
-                                        v_lin=0.0005,
-                                        a_lin=0.001,
+                                        v_lin=0.000005,
+                                        a_lin=0.00001,
                                         wait=True,
                                         timeout=None):
         """
@@ -137,6 +141,14 @@ class MotionAPI:
                             v_lin=v_lin, a_lin=a_lin,
                             q_seed=q_seed,
                             wait=wait, timeout=timeout)
+        
+    def current_pose_from_tf(self):
+        trans = self.buf.lookup_transform("base_link", "tool0",
+                                    rospy.Time(0), rospy.Duration(0.2))
+        pose  = Pose()
+        pose.position = trans.transform.translation
+        pose.orientation = trans.transform.rotation
+        return pose
 # -------------------------------------------------------------------------
 # Example usage when run as a script
 # -------------------------------------------------------------------------
@@ -146,18 +158,17 @@ if __name__ == '__main__':
     api = MotionAPI()
     print(f"Current State:\n{api.get_state()}")
     # 1) Simple joint move demo
-    q0 = [0, -1.57, 1.57, 0, 0, 0]
+    q0 = [-1.57, -1.57, 1.57, 0, 0, 0]
     q1 = [1.57, 1.57, 1.57, 0, 1.57, 1.57]  
-    # success = api.move_joint(api.get_state().position, q1, feedback_cb=lambda fb: rospy.loginfo(f'Joint motion {fb.percent_complete:.0f}%'))
-    # rospy.loginfo(f'Joint motion success: {success}')
-
+    success = api.move_joint(api.get_state().position, q1, feedback_cb=lambda fb: rospy.loginfo(f'Joint motion {fb.percent_complete:.0f}%'))
+    time.sleep(5)
     # 2) Simple Cartesian line demo
-    p0 = Pose()
+    p0 = api.current_pose_from_tf()
+    print(p0)
+    p0.position.z+=0.1
     p1 = Pose()
     qx, qy, qz, qw = quaternion_from_euler(0, -1.57, 0)  # pitch‑down 90°
-    p0.orientation.x, p0.orientation.y, p0.orientation.z, p0.orientation.w = qx, qy, qz, qw
-    p1.orientation = p0.orientation
-    p1.position.x = 0.015
-    p1.position.z = 0.015
+    p1.orientation.x, p1.orientation.y, p1.orientation.z, p1.orientation.w = qx, qy, qz, qw
+    p1.position.y = 0.15
+    p1.position.z = 0.15
     success = api.move_linear_using_current_state(p0, p1)
-    rospy.loginfo(f'Linear motion success: {success}')
