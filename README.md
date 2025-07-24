@@ -104,7 +104,7 @@ Below is a breakdown of each `docker compose` command and what it initializes wi
 | **motion\_action\_server**      | `ur5_ros_gazebo` | `motion_action_server`     | Action server for MoveJoint and MoveLinear actions          | Subscribes `/joint_states`, offers `move_joint` and `move_linear` actions, sends to `/eff_joint_traj_controller/follow_joint_trajectory` |
 | **motion\_demo\_node**          | `ur5_ros_gazebo` | `motion_demo_node`         | KDL MotionLibrary bring‑up and readiness check              | Logs readiness; no active topics/actions                                                                                                 |
 | **motion\_api.py**              | `ur_motion_api`  | Python module              | High‑level API for action‑based UR5 control                 | Connects to `move_joint` & `move_linear` action servers, subscribes `/joint_states`                                                      |
-| **llm\_ai.py**             | `ur_motion_api`  | `llm.py`           | REPL that translates NL commands via LLM to MotionAPI calls | Reads user input; calls Ollama; executes Python under `api` namespace                                                                    |
+| **llm.py**             | `ur_motion_api`  | `llm.py`           | REPL that translates NL commands via LLM to MotionAPI calls | Reads user input; calls Ollama; executes Python under `api` namespace                                                                    |
 
 ---
 

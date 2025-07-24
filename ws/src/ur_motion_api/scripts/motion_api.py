@@ -83,25 +83,37 @@ class MotionAPI:
     # ---------------------------------------------------------------------
     def move_linear(self, pose_start: Pose, pose_goal: Pose,
                     v_lin=0.01, a_lin=0.05,
-                    p_seed=None,
-                    wait=True, feedback_cb=None, timeout=None):
+                    p_seed: Pose = None,
+                    wait=True, feedback_cb=None, timeout=None, raise_on_fail=False):
         """
         Straight‑line Cartesian motion (see C++ MotionLibrary).
-
+        Blocks exactly like move_joint() when wait=True.
         """
+        if p_seed is None:
+            # reasonable default: use current tool pose
+            p_seed = self.current_pose_from_tf()
+
         goal = MoveLinearGoal(pose_start=pose_start,
                               pose_goal=pose_goal,
                               v_lin=v_lin,
                               a_lin=a_lin,
-                              p_seed=(p_seed or []))
-        self._ac_linear.send_goal(goal, feedback_cb=feedback_cb)
+                              p_seed=p_seed)
+
         if wait:
-            if timeout is None:
-                finished = self._ac_linear.wait_for_result()
-            else:
-                finished = self._ac_linear.wait_for_result(timeout)
-            return finished and self._ac_linear.get_result().success
-        return True
+            exec_to    = timeout or rospy.Duration(0)   # 0 == forever
+            preempt_to = rospy.Duration(0)
+            # To still get feedback while blocking, send first, then wait:
+            self._ac_linear.send_goal(goal, feedback_cb=feedback_cb)
+            finished = self._ac_linear.wait_for_result(exec_to)
+            state    = self._ac_linear.get_state()
+            res      = self._ac_linear.get_result()
+            success  = (state == actionlib.GoalStatus.SUCCEEDED) and res and res.success
+            if not success and raise_on_fail:
+                raise RuntimeError(f"move_linear failed: state={state}, res={res}")
+            return success
+        else:
+            self._ac_linear.send_goal(goal, feedback_cb=feedback_cb)
+            return True
 
 # -------------------------------------------------------------------------
 #  Helper: move_linear_using_current_state
@@ -155,12 +167,12 @@ if __name__ == '__main__':
     # time.sleep(5)
     # 2) Simple Cartesian line demo
     p0 = api.current_pose_from_tf()
-    # p0.position.z+=0.1
+    p0.position.z+=0.1
     p1 = Pose()
     qx, qy, qz, qw = quaternion_from_euler(0, -1.57, 0)  # pitch‑down 90°
     p1.orientation.x, p1.orientation.y, p1.orientation.z, p1.orientation.w = qx, qy, qz, qw
     p1.position = p0.position
-    # p1.position.y += 0.15
-    p1.position.z += 0.1
+    p1.position.y += 0.15
+    p1.position.z += 0.5
     success = api.move_linear_using_current_state(p0, p1)
     print(f"=============================\nTarget cartesian pose: \n {p1}\nCartesian pose reached: \n {api.current_pose_from_tf()}")

@@ -15,4 +15,4 @@ until rosnode list 2>/dev/null | grep -q motion_action_server; do
 done
 
 echo "[motion_demo] Servers are up – running demo node."
-exec rosrun ur5_ros_gazebo motion_demo_node
+exec rosrun ur_motion_api motion_api.py
