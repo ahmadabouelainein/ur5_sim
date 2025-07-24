@@ -156,19 +156,22 @@ if __name__ == '__main__':
     rospy.init_node('motion_api_demo')
 
     api = MotionAPI()
-    print(f"Current State:\n{api.get_state()}")
+    # print(f"Current State:\n{api.get_state()}]n")
+    # print()
     # 1) Simple joint move demo
     q0 = [-1.57, -1.57, 1.57, 0, 0, 0]
     q1 = [1.57, 1.57, 1.57, 0, 1.57, 1.57]  
     success = api.move_joint(api.get_state().position, q1, feedback_cb=lambda fb: rospy.loginfo(f'Joint motion {fb.percent_complete:.0f}%'))
     time.sleep(5)
     # 2) Simple Cartesian line demo
+    print(api.current_pose_from_tf())
     p0 = api.current_pose_from_tf()
-    print(p0)
     p0.position.z+=0.1
     p1 = Pose()
     qx, qy, qz, qw = quaternion_from_euler(0, -1.57, 0)  # pitch‑down 90°
     p1.orientation.x, p1.orientation.y, p1.orientation.z, p1.orientation.w = qx, qy, qz, qw
-    p1.position.y = 0.15
-    p1.position.z = 0.15
+    p1.position = p0.position
+    p1.position.y += 0.15
+    p1.position.z -= 0.15
     success = api.move_linear_using_current_state(p0, p1)
+    print(api.current_pose_from_tf())

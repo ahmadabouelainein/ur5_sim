@@ -123,7 +123,9 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
   const double T    = profileTime(dist, v_lin, a_lin);
 
   trajectory_msgs::JointTrajectory traj;
-  traj.header.stamp = ros::Time::now();
+  traj.header.stamp = ros::Time::now()+ ros::Duration(0.1);
+  for (auto& pt : traj.points)
+  pt.time_from_start += ros::Duration(0.1);
   traj.joint_names  = joint_names_;
 
   std::vector<double> q_prev = q_seed;
