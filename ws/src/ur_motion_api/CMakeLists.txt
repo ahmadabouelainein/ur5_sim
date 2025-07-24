@@ -23,15 +23,6 @@ catkin_install_python(
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-# ─── after all existing add_executable lines ─────────────────────────────
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  # Python tests use pytest
-  catkin_install_python(PROGRAMS
-      tests/test_motion_api.py
-      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-endif()
-
 
 install(DIRECTORY launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

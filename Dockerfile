@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
       ros-noetic-universal-robots \
       ros-noetic-rosbash \
       python3-requests \
+      python3-pytest \
       && rm -rf /var/lib/apt/lists/*
 
 ENV WS=/ur5_sim/ws

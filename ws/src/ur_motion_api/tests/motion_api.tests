@@ -1,6 +1,0 @@
-<launch>
-  <test pkg="ur5_ros_gazebo"
-        type="test_motion_api.py"
-        name="test_motion_api"
-        test-name="test_motion_api" />
-</launch>

@@ -1,5 +1,0 @@
-<launch>
-  <test pkg="ur5_ros_gazebo"
-        type="test_motion_library"
-        name="test_motion_library" />
-</launch>
