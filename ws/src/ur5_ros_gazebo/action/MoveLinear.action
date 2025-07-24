@@ -2,7 +2,7 @@ geometry_msgs/Pose pose_start
 geometry_msgs/Pose pose_goal
 float64            v_lin
 float64            a_lin
-float64[]          q_seed
+geometry_msgs/Pose p_seed
 ---
 bool success
 ---

@@ -34,6 +34,47 @@ static KDL::Rotation slerpKDL(const KDL::Rotation& R0,
   return KDL::Rotation::Quaternion(qi.x(), qi.y(), qi.z(), qi.w());
 }
 
+/* Pose -> best IK solution (closest to ref if provided) */
+static bool ikFromPose(const geometry_msgs::Pose& pose,
+                       std::vector<double>&       q_out,
+                       const std::vector<double>* q_ref = nullptr)
+{
+  tf2::Quaternion q;
+  tf2::fromMsg(pose.orientation, q);
+  KDL::Rotation R = KDL::Rotation::Quaternion(q.x(), q.y(), q.z(), q.w());
+  KDL::Vector   P(pose.position.x, pose.position.y, pose.position.z);
+
+  double T[16] = {
+    R(0,0), R(1,0), R(2,0), 0,
+    R(0,1), R(1,1), R(2,1), 0,
+    R(0,2), R(1,2), R(2,2), 0,
+    P.x(),  P.y(),  P.z(),  1
+  };
+
+  double sol[8 * 6];
+  int nsol = ur_kinematics::inverse(T, sol);
+  if (nsol == 0) return false;
+
+  q_out.assign(6, 0.0);
+  if (!q_ref) {
+    for (int j = 0; j < 6; ++j) q_out[j] = sol[j];
+    return true;
+  }
+
+  double best = 1e9;
+  for (int k = 0; k < nsol; ++k) {
+    double d = 0.0;
+    for (int j = 0; j < 6; ++j)
+      d += std::fabs(sol[k * 6 + j] - (*q_ref)[j]);
+    if (d < best) {
+      best = d;
+      for (int j = 0; j < 6; ++j)
+        q_out[j] = sol[k * 6 + j];
+    }
+  }
+  return true;
+}
+
 /* ---------------------------------------------------------------------- */
 MotionLibrary::MotionLibrary(const KDL::Chain&               /*chain*/,
                              const std::vector<std::string>& names,
@@ -90,7 +131,6 @@ MotionLibrary::generateJointMove(const std::vector<double>& q_curr,
 
   auto seg1 = build_segment(q_start, q_target);
 
-  /* shift timestamps +DT and drop duplicate 0‑s point */
   ros::Duration offset = traj.points.empty() ?
                          ros::Duration(0) :
                          traj.points.back().time_from_start + ros::Duration(dt_);
@@ -108,7 +148,7 @@ trajectory_msgs::JointTrajectory
 MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
                                   const geometry_msgs::Pose& P1,
                                   double v_lin, double a_lin,
-                                  const std::vector<double>& q_seed) const
+                                  const geometry_msgs::Pose& p_seed) const
 {
   tf2::Quaternion q0_tf, q1_tf;
   tf2::fromMsg(P0.orientation, q0_tf);
@@ -123,12 +163,14 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
   const double T    = profileTime(dist, v_lin, a_lin);
 
   trajectory_msgs::JointTrajectory traj;
-  traj.header.stamp = ros::Time::now()+ ros::Duration(0.1);
-  for (auto& pt : traj.points)
-  pt.time_from_start += ros::Duration(0.1);
+  traj.header.stamp = ros::Time::now() + ros::Duration(0.1);
   traj.joint_names  = joint_names_;
 
-  std::vector<double> q_prev = q_seed;
+  std::vector<double> q_prev;
+  if (!ikFromPose(p_seed, q_prev, nullptr)) {
+    ROS_WARN("IKFast: failed to compute q_seed from p_seed");
+    return trajectory_msgs::JointTrajectory{};
+  }
 
   for (double t = 0.0; t <= T + 1e-9; t += dt_) {
     double s = clamp01(t / T);
@@ -136,7 +178,6 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
     KDL::Rotation  R = slerpKDL(F0.M, F1.M, s);
     KDL::Frame     F(R, P);
 
-    /* build 4×4 column‑major matrix for IKFast -------------------------- */
     double Tm[16] = { R(0,0), R(1,0), R(2,0), 0,
                       R(0,1), R(1,1), R(2,1), 0,
                       R(0,2), R(1,2), R(2,2), 0,
@@ -148,6 +189,7 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
       ROS_WARN_STREAM("IKFast: no solution at t=" << t << "; aborting.");
       return trajectory_msgs::JointTrajectory{};
     }
+
     std::vector<double> q_sol(6);
     double best = 1e9;
     for (int k = 0; k < nsol; ++k) {
@@ -165,7 +207,7 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
     trajectory_msgs::JointTrajectoryPoint pt;
     pt.positions        = q_sol;
     pt.velocities.resize(6, 0.0);
-    pt.time_from_start  = ros::Duration(t);
+    pt.time_from_start  = ros::Duration(t) + ros::Duration(0.1);
     traj.points.push_back(pt);
   }
   return traj;

@@ -24,7 +24,7 @@ public:
         const geometry_msgs::Pose& P0,
         const geometry_msgs::Pose& P1,
         double v_lin, double a_lin,
-        const std::vector<double>& q_seed) const;
+        const geometry_msgs::Pose& p_seed) const;
 
 private:
   std::vector<std::string> joint_names_;
