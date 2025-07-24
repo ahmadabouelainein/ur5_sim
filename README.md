@@ -27,7 +27,7 @@ ur5_sim/                   # root
 │       └─ ur_motion_api/                   # Python API & LLM ai
 │           ├─ scripts/                     # motion_api.py, llm.py
 │           └─ launch/                      # optional Python demos
-└─ scripts/                # helper scripts (entrypoints, clones)
+└─ docker/                # docker helper scripts (entrypoints)
 ```
 
 ---
