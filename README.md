@@ -1,178 +1,120 @@
-# UR5 Sim – ROS Noetic + Gazebo Classic
+## Features
 
-A reproducible, Docker‑first workspace for simulating, commanding and scripting a **Universal Robots UR5** arm using ROS 1 (Noetic), complete with:
+This package delivers a fully containerized UR5 simulation and control suite with:
 
-* **Gazebo Classic** physics + ros\_control integration
-* C++ **motion‑planning library** (joint trapezoids, Cartesian linear with IK)
-* Thin **Python API** for reading robot state & calling motion primitives
-* Optional **LLM Copilot** that converts natural‑language intents into UR5 API code
-
-## ⚡ Quick start
-<table>
-<tr>
-
-<td >
-
-```bash
-# 1. clone + build image
-$ git clone https://github.com/ahmadabouelainein/ur5_sim.git
-$ cd ur5_sim && docker compose build
-
-# 2. open a new terminal in the running container
-$ docker exec -it ur5_sim-dev bash
-$ source /ws/devel/setup.bash
-
-# 3. run a sine‑wave demo
-$ roslaunch ur5_ros_gazebo ur5_sine_demo.launch
-```
-
-```bash
-# python REPL inside the same container
-$ python3 -m pip install ipython
-$ ipython
-In [1]: from ur_motion_api.motion_api import MotionAPI
-In [2]: api = MotionAPI(); api.move_joint([], [0, -1.57, 1.57, 0, 0, 0])
-```
-
-</td>
-</tr>
-</table>
+* **Sinusoidal Joint Demo**: automated sine‑wave trajectories visualized in Gazebo, showcasing dynamic joint motion.
+* **C++ MotionLibrary**: high‑performance trajectory planner supporting joint‑space interpolation and straight‑line Cartesian moves, backed by KDL inverse-kinematics.
+* **Python MotionAPI**: intuitive action‑client wrapper exposing simple `move_joint` and `move_linear_using_current_state` primitives for rapid scripting.
+* **LLM‑driven Copilot**: an interactive REPL powered by Ollama, translating natural-language commands into valid MotionAPI calls.
 
 ---
 
-## 1 · Repository layout
+## Repository Structure
 
-```
-ur5_sim/
-├─ docker/ …                    # tooling
-├─ Dockerfile  +  docker‑compose.yml
-├─ ws/                       # <‑‑ Catkin workspace root
+```plaintext
+ur5_sim/                   # root
+├─ Dockerfile              # multi‑stage build for ROS workspace
+├─ docker-compose.yml      # services: dev, sine demo, motion server, copilot, ollama
+├─ ws/                     # Catkin workspace
 │   └─ src/
-│       ├─ universal_robot/ur_kinematics  # sparse‑cloned IK pkg
-│       ├─ ur5_ros_gazebo/                # C++ sim + motion lib
-│       └─ ur_motion_api/                 # Python API + LLM stub
-└─ miscellaneous (README, LICENSE, bob.txt, scripts)
-
-```
-
-
----
-
-## 2 · Prerequisites
-
-| Host requirement                      | Why                                                      |
-| ------------------------------------- | -------------------------------------------------------- |
-| **Docker ≥ 24**                       | Reproducible build & GPU off‑load                        |
-| **VS Code Dev Containers** (optional) | Attach IDE to container for C++/Python LSP               |
-| ≈ 10 GB free disk                     | image layers (ROS Noetic desktop‑full + Gazebo + models) |
-
-*No host ROS installation needed.*
-
----
-
-## 3 · Build & run (detailed)
-
-1. **Clone**
-
-   ```bash
-   git clone https://github.com/ahmadabouelainein/ur5_sim.git && cd ur5_sim
-   ```
-2. **Build container** (multi‑stage; first stage compiles catkin workspace)
-
-   ```bash
-   docker compose build
-   ```
-3. **Spin up dev container** – attaches X‑forwarding & Gazebo GUI
-
-   ```bash
-   docker compose up -d
-   docker exec -it ur5_sim-dev bash
-   source /ws/devel/setup.bash
-   ```
-4. **Run bring‑up**
-
-   ```bash
-   roslaunch ur5_ros_gazebo ur5_gazebo.launch gui:=true
-   ```
-5. **Spawn controllers + sine node**
-
-   ```bash
-   roslaunch ur5_ros_gazebo ur5_sine_demo.launch
-   ```
-
-See `docs/run_manual.md` for CLI variants (headless, no‑GUI CI mode).
-
----
-
-## 4 · Python API usage
-
-```python
-from ur_motion_api.motion_api import MotionAPI
-import geometry_msgs.msg as gm
-
-api = MotionAPI()
-
-# moveJ: go directly to home pose
-api.move_joint([], [0, -1.57, 1.57, 0, 0, 0])
-
-# moveL: Cartesian 20 cm straight up
-p0 = gm.Pose();  p1 = gm.Pose();  p1.position.z = 0.20
-api.move_linear(p0, p1)
-```
-
-The API blocks until result by default; pass `wait=False` for asynchronous.
-
----
-
-## 5 · Architecture
-
-```mermaid
-graph LR
-  subgraph Gazebo Sim
-    GZ[gzserver + gzclient]
-    CM[ros_control<br>controller_manager]
-    GZ --> CM
-  end
-  subgraph ROS Nodes
-    sine[sine_joint_publisher]
-    lib[C++ MotionLibrary]
-    actServer[motion_action_server]
-    pyAPI[Python MotionAPI]
-    LLM[LLM Copilot]
-  end
-  sine --> CM
-  actServer --> CM
-  pyAPI --> actServer
-  LLM --> pyAPI
+│       ├─ universal_robot/ur_kinematics   # sparse‑cloned UR kinematics package
+│       ├─ ur5_ros_gazebo/                  # C++ simulation & motion library
+│       │   ├─ src/                         # source files and ROS nodes
+│       │   └─ launch/                      # launch files for sim and demos
+│       └─ ur_motion_api/                   # Python API & LLM copilot
+│           ├─ scripts/                     # motion_api.py, llm_copilot.py
+│           └─ launch/                      # optional Python demos
+└─ scripts/                # helper scripts (entrypoints, clones)
 ```
 
 ---
 
-## 6 · Roadmap
+## Initial Setup
 
-* [x] **M1** – base UR5 sim + sine demo
-* [x] **M2** – motion library & IK
-* [x] **M3** – Python API wrapper
-* [ ] **M4** – local LLM copilot (under development)
-* [ ] CI pipeline (GitHub Actions) running headless simulation tests
+First, clone the sparse `ur_kinematics` subset of the ROS‑Industrial Universal Robot repository and build your Docker images:
+> **Note:** Run these commands from the **root of the project directory** (`ur5_sim/`).
+
+```bash
+cd ws/src
+
+git clone --depth 1 --filter=blob:none --sparse \
+          --branch noetic-devel \
+          https://github.com/ros-industrial/universal_robot.git
+
+cd universal_robot
+git sparse-checkout set ur_kinematics
+
+cd ../..
+docker compose build
+```
 
 ---
 
-## 7 · Troubleshooting
+## Quick Start
 
-| Symptom                                     | Likely cause                                           | Fix                                                             |
-| ------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------- |
-| Gazebo GUI crashes inside container         | Missing `--privileged` + X11 flags                     | use provided `docker compose up`                                |
-| Action returns `success: False` immediately | first trajectory point not within controller tolerance | API now prepends auto‑segment; otherwise loosen YAML tolerances |
-| `seed size (0) ??? DOFs (6)`                | Cartesian move called without IK seed                  | use `move_linear_using_current_state()` helper                  |
+> **Note:** Run these commands from the **root of the project directory** (`ur5_sim/`).
 
-More Q\&A in [`docs/FAQ.md`](docs/FAQ.md).
+1. **Start the Ollama LLM service**
+
+   ```bash
+   cd ur5_sim  # ensure you’re in the project root
+   docker compose up -d ollama
+   ```
+
+2. **Launch the UR5 motion action server**
+
+   ```bash
+   cd ur5_sim  # project root still
+   docker compose run --rm ur5_motion_server
+   ```
+
+3. **Start the LLM Copilot REPL**
+
+   ```bash
+   cd ur5_sim  # project root
+   docker compose run --rm ur5_llm_copilot
+   ```
+
+At the `>>>` prompt, type natural language commands (e.g. `move up 10 cm`).
 
 ---
 
-## 8 · Credits & License
+## Detailed Startup Guide
 
-* **Universal Robots ROS‑Industrial** – URDF models & Gazebo integration (Apache 2.0)
-* **llama.cpp / Ollama** – local LLM backend (MIT)
+Below is a breakdown of each `docker compose` command and what it initializes within the system:
 
-Project code © 2025 Ahmad Abouelainein – MIT License. 3rd‑party licenses remain with their respective authors.
+| Command                                     | Description                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `docker compose up -d ollama`               | Pulls and starts the Ollama LLM daemon in detached mode, exposing the `/api/chat` endpoint on port 11434.                                 |
+| `docker compose run --rm ur5_dev`           | Launches an interactive development container with full access to the workspace, Gazebo GUI, and ROS environment. For development purposes.                    |
+| `docker compose run --rm ur5_sine_demo`     | Runs the sine-wave joint demo: publishes a sinusoidal trajectory on all UR5 joints to the Gazebo simulation.                              |
+| `docker compose run --rm ur5_motion_server` | Builds the workspace, sources ROS, and starts the `motion_action_server` along with ROS core. |
+| `docker compose run --rm ur5_llm_copilot`   | Starts the LLM Copilot REPL, waits for Ollama and the motion action servers, then interprets NL commands into MotionAPI calls.            |
+
+---
+
+## Node Overview
+
+| Node Name                       | Package          | Executable / Script        | Purpose                                                     | Interfaces                                                                                                                               |
+| ------------------------------- | ---------------- | -------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **sine\_joint\_action\_client** | `ur5_ros_gazebo` | `sine_joint_action_client` | Publishes sine‑wave joint commands to controller            | Publishes `FollowJointTrajectory` to `/eff_joint_traj_controller/follow_joint_trajectory`                                                |
+| **motion\_action\_server**      | `ur5_ros_gazebo` | `motion_action_server`     | Action server for MoveJoint and MoveLinear actions          | Subscribes `/joint_states`, offers `move_joint` and `move_linear` actions, sends to `/eff_joint_traj_controller/follow_joint_trajectory` |
+| **motion\_demo\_node**          | `ur5_ros_gazebo` | `motion_demo_node`         | KDL MotionLibrary bring‑up and readiness check              | Logs readiness; no active topics/actions                                                                                                 |
+| **motion\_api.py**              | `ur_motion_api`  | Python module              | High‑level API for action‑based UR5 control                 | Connects to `move_joint` & `move_linear` action servers, subscribes `/joint_states`                                                      |
+| **llm\_copilot.py**             | `ur_motion_api`  | `llm_copilot.py`           | REPL that translates NL commands via LLM to MotionAPI calls | Reads user input; calls Ollama; executes Python under `api` namespace                                                                    |
+
+---
+
+## Launch File Overview
+
+| Launch File            | Package          | Purpose                                                                             |
+| ---------------------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `ur5_motion_demo.launch` | `ur5_ros_gazebo` | Starts roscore and the `motion_action_server` node, setting up action interfaces.   |
+| `sine_demo.launch`     | `ur5_ros_gazebo` | Runs the sine‑wave joint trajectory demo, publishing continuous joint commands.     |
+| `ur_motion_api.launch`   | `ur_motion_api`  | Launches a Python demo node using MotionAPI for scripted joint and Cartesian moves. |
+
+---
+
+## License
+
+This project is MIT licensed. See [LICENSE](LICENSE) for details.

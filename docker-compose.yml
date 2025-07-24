@@ -66,28 +66,7 @@ services:
     entrypoint: ["/motion_server_entrypoint.sh"]
 
 ###############################################################################
-# Task 3 demo client
-###############################################################################
-  # ur5_motion_demo:
-  #   image: ur5_gazebo_motion_lib_api
-  #   build: .
-  #   container_name: ur5_motion_demo
-  #   depends_on: [ur5_motion_server]
-  #   environment:
-  #     - DISPLAY=${DISPLAY}
-  #     - QT_X11_NO_MITSHM=1
-  #   volumes:
-  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
-  #     - ./:/ur5_sim:rw
-  #   network_mode: host
-  #   privileged: true
-  #   shm_size: "2gb"
-  #   working_dir: /ws
-  #   tty: true
-  #   entrypoint: ["/motion_demo_entrypoint.sh"]
-
-###############################################################################
-# Task 4 – LLM Copilot
+# Task 3 + 4 – MotionApi + LLM Copilot
 ###############################################################################
   ur5_llm_copilot:
     image: ur5_gazebo_motion_lib_api
