@@ -13,7 +13,7 @@ OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
 export ROS_MASTER_URI=${ROS_MASTER_URI:-http://localhost:11311}
 export ROS_IP=${ROS_IP:-127.0.0.1}
 
-echo "[copilot] ROS=$ROS_DISTRO  BACKEND=$LLM_BACKEND  MODEL=$LLM_MODEL"
+echo "[llm] ROS=$ROS_DISTRO  BACKEND=$LLM_BACKEND  MODEL=$LLM_MODEL"
 
 # ───────────────────── ROS env -------------------------------------------
 source "/opt/ros/${ROS_DISTRO}/setup.bash"
@@ -21,7 +21,7 @@ source "/opt/ros/${ROS_DISTRO}/setup.bash"
 
 # ───────────────────── roscore -------------------------------------------
 if ! rostopic list >/dev/null 2>&1; then
-  echo "[copilot] starting roscore…"
+  echo "[llm-$LLM_MODEL] starting roscore…"
   roscore &
   ROSCORE_PID=$!
   until rostopic list >/dev/null 2>&1; do sleep 1; done
@@ -37,9 +37,9 @@ fi
 
 # ───────────────────── wait for Ollama -----------------------------------
 if [ "$LLM_BACKEND" = "ollama" ]; then
-  echo "[copilot] waiting for Ollama at $OLLAMA_HOST …"
+  echo "[llm-$LLM_MODEL] waiting for Ollama at $OLLAMA_HOST …"
   for _ in {1..60}; do
-    curl -fsS "$OLLAMA_HOST/api/tags" >/dev/null 2>&1 && { echo "[copilot] Ollama is up."; break; }
+    curl -fsS "$OLLAMA_HOST/api/tags" >/dev/null 2>&1 && { echo "[ai] Ollama is up."; break; }
     sleep 2
   done
 fi
@@ -53,5 +53,5 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # ───────────────────── launch the LLM REPL -------------------------------
-exec python3 /ur5_sim/ws/src/ur_motion_api/scripts/llm_copilot.py \
+exec python3 /ur5_sim/ws/src/ur_motion_api/scripts/llm.py \
      --backend "$LLM_BACKEND" --model "$LLM_MODEL"

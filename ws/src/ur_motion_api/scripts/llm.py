@@ -9,7 +9,7 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 MODEL       = os.getenv("LLM_MODEL",  "mistral:instruct")
 
 SYSTEM_PROMPT = """
-You are an autonomous *UR5 Copilot* that writes **runnable Python** for
+You are an autonomous *UR5 ai* that writes **runnable Python** for
 the MotionAPI shown below.  
 You receive a single natural‑language request from the user and must
 return **only the Python code** that fulfils it – no prose, no markdown
@@ -161,7 +161,7 @@ def sanitize_code(code: str) -> str:
     return code
 
 def main():
-    rospy.init_node("llm_copilot", anonymous=True)
+    rospy.init_node("llm", anonymous=True)
     api = MotionAPI()
 
     # execution namespace
@@ -174,7 +174,7 @@ def main():
         "np": np
     }
 
-    print("LLM Copilot ready.  Type natural language commands.\nPress Ctrl-D to exit.\n")
+    print("LLM ai ready.  Type natural language commands.\nPress Ctrl-D to exit.\n")
     history = [{"role": "system", "content": SYSTEM_PROMPT.strip()}]
 
     while not rospy.is_shutdown():

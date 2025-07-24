@@ -1,3 +1,6 @@
+# LLM-enabled UR5 Control Suite
+ A Dockerized ROS Noetic and Gazebo environment for UR5 simulation, motion planning, and natural-language command generation via an LLM copilot.
+
 ## Features
 
 This package delivers a fully containerized UR5 simulation and control suite with:
@@ -5,7 +8,7 @@ This package delivers a fully containerized UR5 simulation and control suite wit
 * **Sinusoidal Joint Demo**: automated sine‑wave trajectories visualized in Gazebo, showcasing dynamic joint motion.
 * **C++ MotionLibrary**: high‑performance trajectory planner supporting joint‑space interpolation and straight‑line Cartesian moves, backed by KDL inverse-kinematics.
 * **Python MotionAPI**: intuitive action‑client wrapper exposing simple `move_joint` and `move_linear_using_current_state` primitives for rapid scripting.
-* **LLM‑driven Copilot**: an interactive REPL powered by Ollama, translating natural-language commands into valid MotionAPI calls.
+* **LLM‑driven ai**: an interactive REPL powered by Ollama, translating natural-language commands into valid MotionAPI calls.
 
 ---
 
@@ -14,15 +17,15 @@ This package delivers a fully containerized UR5 simulation and control suite wit
 ```plaintext
 ur5_sim/                   # root
 ├─ Dockerfile              # multi‑stage build for ROS workspace
-├─ docker-compose.yml      # services: dev, sine demo, motion server, copilot, ollama
+├─ docker-compose.yml      # services: dev, sine demo, motion server, ai, ollama
 ├─ ws/                     # Catkin workspace
 │   └─ src/
 │       ├─ universal_robot/ur_kinematics   # sparse‑cloned UR kinematics package
 │       ├─ ur5_ros_gazebo/                  # C++ simulation & motion library
 │       │   ├─ src/                         # source files and ROS nodes
 │       │   └─ launch/                      # launch files for sim and demos
-│       └─ ur_motion_api/                   # Python API & LLM copilot
-│           ├─ scripts/                     # motion_api.py, llm_copilot.py
+│       └─ ur_motion_api/                   # Python API & LLM ai
+│           ├─ scripts/                     # motion_api.py, llm.py
 │           └─ launch/                      # optional Python demos
 └─ scripts/                # helper scripts (entrypoints, clones)
 ```
@@ -68,11 +71,11 @@ docker compose build
    docker compose run --rm ur5_motion_server
    ```
 
-3. **Start the LLM Copilot REPL**
+3. **Start the LLM ai REPL**
 
    ```bash
    cd ur5_sim  # project root
-   docker compose run --rm ur5_llm_copilot
+   docker compose run --rm ur5_llm
    ```
 
 At the `>>>` prompt, type natural language commands (e.g. `move up 10 cm`).
@@ -89,7 +92,7 @@ Below is a breakdown of each `docker compose` command and what it initializes wi
 | `docker compose run --rm ur5_dev`           | Launches an interactive development container with full access to the workspace, Gazebo GUI, and ROS environment. For development purposes.                    |
 | `docker compose run --rm ur5_sine_demo`     | Runs the sine-wave joint demo: publishes a sinusoidal trajectory on all UR5 joints to the Gazebo simulation.                              |
 | `docker compose run --rm ur5_motion_server` | Builds the workspace, sources ROS, and starts the `motion_action_server` along with ROS core. |
-| `docker compose run --rm ur5_llm_copilot`   | Starts the LLM Copilot REPL, waits for Ollama and the motion action servers, then interprets NL commands into MotionAPI calls.            |
+| `docker compose run --rm ur5_llm`   | Starts the LLM ai REPL, waits for Ollama and the motion action servers, then interprets NL commands into MotionAPI calls.            |
 
 ---
 
@@ -101,7 +104,7 @@ Below is a breakdown of each `docker compose` command and what it initializes wi
 | **motion\_action\_server**      | `ur5_ros_gazebo` | `motion_action_server`     | Action server for MoveJoint and MoveLinear actions          | Subscribes `/joint_states`, offers `move_joint` and `move_linear` actions, sends to `/eff_joint_traj_controller/follow_joint_trajectory` |
 | **motion\_demo\_node**          | `ur5_ros_gazebo` | `motion_demo_node`         | KDL MotionLibrary bring‑up and readiness check              | Logs readiness; no active topics/actions                                                                                                 |
 | **motion\_api.py**              | `ur_motion_api`  | Python module              | High‑level API for action‑based UR5 control                 | Connects to `move_joint` & `move_linear` action servers, subscribes `/joint_states`                                                      |
-| **llm\_copilot.py**             | `ur_motion_api`  | `llm_copilot.py`           | REPL that translates NL commands via LLM to MotionAPI calls | Reads user input; calls Ollama; executes Python under `api` namespace                                                                    |
+| **llm\_ai.py**             | `ur_motion_api`  | `llm.py`           | REPL that translates NL commands via LLM to MotionAPI calls | Reads user input; calls Ollama; executes Python under `api` namespace                                                                    |
 
 ---
 

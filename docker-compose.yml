@@ -66,12 +66,12 @@ services:
     entrypoint: ["/motion_server_entrypoint.sh"]
 
 ###############################################################################
-# Task 3 + 4 – MotionApi + LLM Copilot
+# Task 3 + 4 – MotionApi + LLM
 ###############################################################################
-  ur5_llm_copilot:
+  ur5_llm:
     image: ur5_gazebo_motion_lib_api
     build: .
-    container_name: ur5_llm_copilot
+    container_name: ur5_llm
     depends_on: [ollama]
     environment:
       - DISPLAY=${DISPLAY}
@@ -84,7 +84,7 @@ services:
     network_mode: host
     working_dir: /ws
     tty: true
-    entrypoint: ["/copilot_entrypoint.sh"]
+    entrypoint: ["/llm_entrypoint.sh"]
 
 ###############################################################################
 # Side‑car LLM server
