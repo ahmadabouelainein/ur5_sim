@@ -193,13 +193,11 @@ class MotionAPI:
         Returns:
             True if the action succeeds, False otherwise.
         """
-        goal = MoveLinearGoal(
-            pose_start=p_start,
-            pose_goal=p_goal,
-            v_lin=v_lin,
-            a_lin=a_lin,
-            p_seed=p_start
-        )
+        goal = MoveLinearGoal(pose_start=p_start,
+                      pose_goal=p_goal,
+                      v_lin=v_lin,
+                      a_lin=a_lin)
+
         return self._send_and_wait(self._ac_linear, goal, **kwargs)
 
     def move_joint_sequence(
@@ -281,7 +279,7 @@ class MotionAPI:
         wait: bool = True,
         feedback_cb=None,
         timeout=None,
-        raise_on_error: bool = False
+        raise_on_error: bool = True
     ) -> bool:
         """
         Send a goal and optionally wait for its result.
@@ -299,12 +297,12 @@ class MotionAPI:
         """
         if wait:
             client.send_goal(goal, feedback_cb=feedback_cb)
-            client.wait_for_result(timeout or rospy.Duration(0))
+            client.wait_for_result(timeout or rospy.Duration(2000))
             state = client.get_state()
             res = client.get_result()
             success = (state == actionlib.GoalStatus.SUCCEEDED and res and res.success)
             if not success and raise_on_error:
-                raise RuntimeError(f"Action failed: state={state}, result={res}")
+                raise RuntimeError(f"Action failed: \nstate={state}, result={res}")
             return success
         client.send_goal(goal, feedback_cb=feedback_cb)
         return True
@@ -312,13 +310,11 @@ class MotionAPI:
 if __name__ == '__main__':
     rospy.init_node('motion_api_demo')
     api = MotionAPI()
-    q0 = [0.1]*6
-    q1 = [0.5]*6
+    q0 = [1]*6
+    q1 = [0]*6
     api.move_joint_sequence(q0, q1)
     p0 = api._get_current_pose()
     p0.position.z += 0.1
     p1 = Pose()
     qx, qy, qz, qw = quaternion_from_euler(0, 0, 1.57)
-    p1.orientation = type(p1.orientation)(qx, qy, qz, qw)
-    p1.position = p0.position
     api.move_linear_sequence(p0, p1)

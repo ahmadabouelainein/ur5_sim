@@ -143,46 +143,62 @@ MotionLibrary::generateJointMove(const std::vector<double>& q_curr,
   return traj;
 }
 
-/* ---------------------------------------------------------------------- */
 trajectory_msgs::JointTrajectory
 MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
                                   const geometry_msgs::Pose& P1,
-                                  double v_lin, double a_lin,
-                                  const geometry_msgs::Pose& p_seed) const
+                                  double v_lin,
+                                  double a_lin,
+                                  const std::vector<double>& q_seed) const
 {
+  // Convert start/end poses into KDL frames
   tf2::Quaternion q0_tf, q1_tf;
   tf2::fromMsg(P0.orientation, q0_tf);
   tf2::fromMsg(P1.orientation, q1_tf);
 
-  KDL::Frame F0(KDL::Rotation::Quaternion(q0_tf.x(), q0_tf.y(), q0_tf.z(), q0_tf.w()),
-                KDL::Vector(P0.position.x, P0.position.y, P0.position.z));
-  KDL::Frame F1(KDL::Rotation::Quaternion(q1_tf.x(), q1_tf.y(), q1_tf.z(), q1_tf.w()),
-                KDL::Vector(P1.position.x, P1.position.y, P1.position.z));
+  KDL::Frame F0(
+    KDL::Rotation::Quaternion(q0_tf.x(), q0_tf.y(), q0_tf.z(), q0_tf.w()),
+    KDL::Vector(P0.position.x, P0.position.y, P0.position.z)
+  );
+  KDL::Frame F1(
+    KDL::Rotation::Quaternion(q1_tf.x(), q1_tf.y(), q1_tf.z(), q1_tf.w()),
+    KDL::Vector(P1.position.x, P1.position.y, P1.position.z)
+  );
 
-  const double dist = (F1.p - F0.p).Norm();
-  const double T    = profileTime(dist, v_lin, a_lin);
+  // Compute total motion time via trapezoidal profile
+  double dist = (F1.p - F0.p).Norm();
+  double T    = profileTime(dist, v_lin, a_lin);
 
+  // Prepare output trajectory
   trajectory_msgs::JointTrajectory traj;
   traj.header.stamp = ros::Time::now() + ros::Duration(0.1);
   traj.joint_names  = joint_names_;
 
-  std::vector<double> q_prev;
-  if (!ikFromPose(p_seed, q_prev, nullptr)) {
-    ROS_WARN("IKFast: failed to compute q_seed from p_seed");
+  // Initialize the IK seed from caller‑provided joint vector
+  std::vector<double> q_prev = q_seed;
+  if (q_prev.size() != joint_names_.size()) {
+    ROS_ERROR("generateLinearMove: seed size mismatch (%zu vs %zu)",
+              q_prev.size(), joint_names_.size());
     return trajectory_msgs::JointTrajectory{};
   }
 
+  // Interpolate in Cartesian space, solve IK at each step
   for (double t = 0.0; t <= T + 1e-9; t += dt_) {
     double s = clamp01(t / T);
-    KDL::Vector    P = F0.p + s * (F1.p - F0.p);
-    KDL::Rotation  R = slerpKDL(F0.M, F1.M, s);
-    KDL::Frame     F(R, P);
 
-    double Tm[16] = { R(0,0), R(1,0), R(2,0), 0,
-                      R(0,1), R(1,1), R(2,1), 0,
-                      R(0,2), R(1,2), R(2,2), 0,
-                      P.x(),  P.y(),  P.z(),  1 };
+    // Interpolate position & orientation
+    KDL::Vector   P = F0.p + s * (F1.p - F0.p);
+    KDL::Rotation R = slerpKDL(F0.M, F1.M, s);
+    KDL::Frame    F(R, P);
 
+    // Build transform matrix for IKFast
+    double Tm[16] = {
+      R(0,0), R(1,0), R(2,0), 0,
+      R(0,1), R(1,1), R(2,1), 0,
+      R(0,2), R(1,2), R(2,2), 0,
+      P.x(),  P.y(),  P.z(),  1
+    };
+
+    // Solve analytic IK
     double sol[8 * 6];
     int nsol = ur_kinematics::inverse(Tm, sol);
     if (nsol == 0) {
@@ -190,25 +206,31 @@ MotionLibrary::generateLinearMove(const geometry_msgs::Pose& P0,
       return trajectory_msgs::JointTrajectory{};
     }
 
+    // Pick the solution closest to the previous one
     std::vector<double> q_sol(6);
-    double best = 1e9;
+    double best_err = std::numeric_limits<double>::infinity();
     for (int k = 0; k < nsol; ++k) {
-      double dist = 0.0;
-      for (int j = 0; j < 6; ++j)
-        dist += std::fabs(sol[k * 6 + j] - q_prev[j]);
-      if (dist < best) {
-        best = dist;
-        for (int j = 0; j < 6; ++j)
-          q_sol[j] = sol[k * 6 + j];
+      double err = 0.0;
+      for (size_t j = 0; j < q_prev.size(); ++j) {
+        double dq = sol[k*6 + j] - q_prev[j];
+        err += std::fabs(dq);
+      }
+      if (err < best_err) {
+        best_err = err;
+        for (size_t j = 0; j < q_prev.size(); ++j) {
+          q_sol[j] = sol[k*6 + j];
+        }
       }
     }
     q_prev = q_sol;
 
+    // Append this point
     trajectory_msgs::JointTrajectoryPoint pt;
-    pt.positions        = q_sol;
-    pt.velocities.resize(6, 0.0);
-    pt.time_from_start  = ros::Duration(t) + ros::Duration(0.1);
+    pt.positions       = q_sol;
+    pt.velocities.resize(q_sol.size(), 0.0);
+    pt.time_from_start = ros::Duration(t) + ros::Duration(0.1);
     traj.points.push_back(pt);
   }
+
   return traj;
 }
