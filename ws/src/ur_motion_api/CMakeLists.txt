@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ur_motion_api)               # <-- MUST be ur_motion_api, not ur5_ros_gazebo
-
+project(ur_motion_api)             
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
