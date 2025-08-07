@@ -18,10 +18,10 @@ Return **only** the Python code that fulfills the user's request – no prose, n
 
 • Action definitions:
     MoveJoint.action
-      geometry_msgs/Pose q_start
-      geometry_msgs/Pose q_target
-      float64            v_max
-      float64            a_max
+      float64[] q_start
+      float64[] q_target
+      float64   v_max
+      float64   a_max
       ---
       bool success
       ---
@@ -32,25 +32,24 @@ Return **only** the Python code that fulfills the user's request – no prose, n
       geometry_msgs/Pose pose_goal
       float64            v_lin
       float64            a_lin
-      geometry_msgs/Pose p_seed
-      ---   
+      ---
       bool success
       ---
       float32 percent_complete
 
 • MotionAPI helpers in scope:
     api.move_joint(q_start, q_goal, v_max=…, a_max=…)
-    api.move_linear(pose_start, pose_goal, v_lin=…, a_lin=…, p_seed=…)
-    api.move_linear_using_current_state(pose_start, pose_goal, v_lin=…, a_lin=…)
-    api.current_pose_from_tf()
-    api.get_state()
-    api._reorder_to_controller(js_msg)
+    api.move_linear(pose_start, pose_goal, v_lin=…, a_lin=…)
+    api.move_joint_sequence(q0, q1, v_max=…, a_max=…)
+    api.move_linear_sequence(p0, p1, v_lin=…, a_lin=…)
+    api._get_current_js()
+    api._get_current_pose()
     Pose, Point, quaternion_from_euler, math
 
 ── CAPABILITIES ────────────────────────────────────────────────────────
-1. Relative Cartesian moves: adjust p0 from current_pose; call api.move_linear...
+1. Relative Cartesian moves: adjust p0 from api._get_current_pose(); call api.move_linear...
 2. Absolute Cartesian moves: build Pose(); call api.move_linear...
-3. Joint moves: modify list from api._reorder_to_controller(api.get_state()); call api.move_joint...
+3. Joint moves: modify list from api._get_current_js(); call api.move_joint...
 4. Two-point linear paths: call api.move_linear_sequence(p0, p1, v_lin, a_lin)
 5. Two-point joint sequences: call api.move_joint_sequence(q0, q1, v_max, a_max)
 6. Unit conversions: cm→m, mm→m, deg→rad.
@@ -98,20 +97,6 @@ def sanitize_code(code: str) -> str:
     # map geometry_msgs.Point/Pose to bare Point/Pose
     code = re.sub(r"geometry_msgs(?:\.msg)?\.Point", "Point", code)
     code = re.sub(r"geometry_msgs(?:\.msg)?\.Pose",  "Pose",  code)
-    # If move_linear_using_current_state has only 1 positional arg, wrap
-    if "move_linear_using_current_state" in code:
-        # crude parse: count commas before v_lin
-        call_re = re.compile(r"api\.move_linear_using_current_state\s*\(([^)]*)\)")
-        m = call_re.search(code)
-        if m:
-            args = m.group(1)
-            # remove keywords to count raw args
-            raw_args = args.split(",")
-            has_vlin = "v_lin" in args
-            if has_vlin:
-                # build robust replacement using both start & goal as Pose()
-                repl = "api.move_linear_using_current_state(Pose(), Pose(), v_lin=0.1, a_lin=0.2)"
-                code = call_re.sub(repl, code)
     return code
 
 def main():

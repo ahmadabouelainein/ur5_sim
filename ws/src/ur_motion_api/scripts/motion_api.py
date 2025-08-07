@@ -297,7 +297,9 @@ class MotionAPI:
         """
         if wait:
             client.send_goal(goal, feedback_cb=feedback_cb)
-            client.wait_for_result(timeout or rospy.Duration(2000))
+            if timeout is None:
+                timeout = rospy.Duration(2000)
+            client.wait_for_result(timeout)
             state = client.get_state()
             res = client.get_result()
             success = (state == actionlib.GoalStatus.SUCCEEDED and res and res.success)

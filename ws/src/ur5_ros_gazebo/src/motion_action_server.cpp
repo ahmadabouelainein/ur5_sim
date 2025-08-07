@@ -254,7 +254,7 @@ void onLinearGoal()
     ];
   }
 
-  // 4) Generate Cartesian trajectory with the joint-vector seed
+  // 3) Generate Cartesian trajectory with the joint-vector seed
   auto traj = lib_->generateLinearMove(
     goal->pose_start,
     goal->pose_goal,
@@ -269,7 +269,7 @@ void onLinearGoal()
     return;
   }
 
-  // 5) Send trajectory and stream feedback
+  // 4) Send trajectory and stream feedback
   control_msgs::FollowJointTrajectoryGoal ctl;
   ctl.trajectory = traj;
   traj_ac_.sendGoal(ctl);
@@ -286,7 +286,7 @@ void onLinearGoal()
     ros::Duration(0.1).sleep();
   }
 
-  // 6) Report final result
+  // 5) Report final result
   bool success = (traj_ac_.getState() ==
                   actionlib::SimpleClientGoalState::SUCCEEDED);
   ur5_ros_gazebo::MoveLinearResult res;

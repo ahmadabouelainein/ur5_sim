@@ -7,7 +7,7 @@ This package delivers a fully containerized UR5 simulation and control suite wit
 
 * **Sinusoidal Joint Demo**: automated sine‑wave trajectories visualized in Gazebo, showcasing dynamic joint motion.
 * **C++ MotionLibrary**: high‑performance trajectory planner supporting joint‑space interpolation and straight‑line Cartesian moves, backed by KDL inverse-kinematics.
-* **Python MotionAPI**: intuitive action‑client wrapper exposing simple `move_joint` and `move_linear_using_current_state` primitives for rapid scripting.
+* **Python MotionAPI**: intuitive action‑client wrapper exposing simple `move_joint` and `move_linear` primitives for rapid scripting.
 * **LLM‑driven ai**: an interactive REPL powered by Ollama, translating natural-language commands into valid MotionAPI calls.
 
 ---
