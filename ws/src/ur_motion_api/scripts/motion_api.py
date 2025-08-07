@@ -97,8 +97,13 @@ class MotionAPI:
             'base_link', 'tool0', rospy.Time(0), rospy.Duration(0.2)
         )
         pose = Pose()
-        pose.position = tf.transform.translation
-        pose.orientation = tf.transform.rotation
+        pose.position.x = tf.transform.translation.x
+        pose.position.y = tf.transform.translation.y
+        pose.position.z = tf.transform.translation.z
+        pose.orientation.x = tf.transform.rotation.x
+        pose.orientation.y = tf.transform.rotation.y
+        pose.orientation.z = tf.transform.rotation.z
+        pose.orientation.w = tf.transform.rotation.w
         return pose
 
     def _is_within_tolerance_joint(
