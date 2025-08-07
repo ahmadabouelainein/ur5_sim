@@ -23,5 +23,9 @@ catkin_install_python(
 )
 
 
+if(CATKIN_ENABLE_TESTING)
+  catkin_add_nosetests(tests)
+endif()
+
 install(DIRECTORY launch
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
