@@ -1,6 +1,15 @@
 # LLM-enabled UR5 Control Suite
  A Dockerized ROS Noetic and Gazebo environment for UR5 simulation, motion planning, and natural-language command generation via an LLM copilot.
 
+## Overview
+
+The project is organized as a ROS Noetic Catkin workspace packaged inside Docker. The top-level `ur5_sim/` folder contains a `ws/` directory with two primary ROS packages:
+
+* **`ur5_ros_gazebo`** – C++ nodes, a MotionLibrary for trajectory generation, MoveJoint/MoveLinear action servers, and a sine‑wave demo client.
+* **`ur_motion_api`** – Python action‑client wrappers and an LLM-powered REPL that translates natural language into MotionAPI calls.
+
+Docker Compose services wire these pieces together, providing containers for development, the motion server, the sine demo, the LLM REPL, and an Ollama model host.
+
 ## Features
 
 This package delivers a fully containerized UR5 simulation and control suite with:
@@ -117,6 +126,15 @@ Below is a breakdown of each `docker compose` command and what it initializes wi
 | `ur_motion_api.launch`   | `ur_motion_api`  | Launches a Python demo node using MotionAPI for scripted joint and Cartesian moves. |
 
 ---
+
+## Next Steps for Newcomers
+
+1. **Spin up the containers** using the [Quick Start](#quick-start) commands to explore the motion server and LLM REPL.
+2. **Study ROS actions and trajectories** such as `control_msgs/FollowJointTrajectoryAction` to understand how MotionLibrary builds and executes motion plans.
+3. **Experiment with `motion_api.py`**—write small Python scripts with `move_joint` and `move_linear` to build confidence with action-based control.
+4. **Explore the LLM workflow** in `llm.py` to customize prompts or add safety checks around generated code.
+5. **Dive into kinematics** via the UR-specific IKFast solver in `ur_kinematics` for more advanced trajectory or robot adaptations.
+6. **Expand the simulation** by adding sensors, alternate controllers, or complex demos such as pick-and-place sequences.
 
 ## License
 
